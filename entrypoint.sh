@@ -34,6 +34,17 @@ case "$NEXT_PUBLIC_SUPABASE_ANON_KEY" in
     ;;
 esac
 
+# --- A chave precisa ser ASCII imprimível --------------------------------
+# Chaves copiadas de terminais, chats ou logs que mascaram segredos vêm com o
+# valor substituído por bullets (U+2022) ou reticências. O app sobe, mas todo
+# fetch falha com "String contains non ISO-8859-1 code point", porque cabeçalho
+# HTTP não aceita caractere fora de Latin-1. Falhar aqui é muito mais barato.
+if printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | LC_ALL=C grep -q '[^ -~]'; then
+  fail "NEXT_PUBLIC_SUPABASE_ANON_KEY contém caractere não-ASCII.
+   Provavelmente foi copiada de uma saída que mascara segredos (os '•').
+   Copie direto do painel do Supabase, em Settings > API Keys."
+fi
+
 # A chave anon em formato JWT carrega \"role\":\"anon\" no payload. Se vier um JWT
 # com service_role, é a chave errada — mesmo problema, outro formato.
 case "$NEXT_PUBLIC_SUPABASE_ANON_KEY" in
