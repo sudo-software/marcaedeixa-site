@@ -3,6 +3,11 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+  # Permite redeployar pela aba Actions sem precisar de commit.
+  # Necessário porque as variáveis de ambiente vêm dos GitHub Secrets e são
+  # reescritas a cada deploy: trocar um secret não tem efeito até que o
+  # workflow rode de novo.
+  workflow_dispatch:
 
 env:
   PROJECT_ID: marca-e-deixa

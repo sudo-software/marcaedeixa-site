@@ -1,9 +1,57 @@
 #!/bin/sh
 set -e
 
-# Substitui placeholders NEXT_PUBLIC_* nos JS buildados pelo Next.js
-# com os valores reais das env vars definidas em runtime (Dokploy, docker run, etc.)
-# Isso resolve o problema de NEXT_PUBLIC_* serem inlineados no build time.
+# ============================================================
+#  Injeção de variáveis de ambiente em runtime
+# ============================================================
+#
+# As variáveis NEXT_PUBLIC_* são embutidas pelo Next.js no momento do build.
+# Como a imagem é construída sem os valores reais, o build usa placeholders e
+# este script os substitui pelos valores de runtime antes de subir o servidor.
+#
+# A validação abaixo existe porque uma variável ausente vira string vazia no
+# sed, e a aplicação subiria quebrada sem um único erro no log.
+
+fail() {
+  echo "❌ $1" >&2
+  exit 1
+}
+
+# --- Obrigatórias --------------------------------------------------------
+[ -n "$NEXT_PUBLIC_SUPABASE_URL" ]      || fail "NEXT_PUBLIC_SUPABASE_URL não definida."
+[ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] || fail "NEXT_PUBLIC_SUPABASE_ANON_KEY não definida."
+[ -n "$SUPABASE_SERVICE_ROLE_KEY" ]     || fail "SUPABASE_SERVICE_ROLE_KEY não definida."
+[ -n "$NEXT_PUBLIC_APP_URL" ]           || fail "NEXT_PUBLIC_APP_URL não definida."
+
+# --- A chave pública não pode ser uma chave secreta ----------------------
+# Tudo que é NEXT_PUBLIC_* vai para o JavaScript entregue ao navegador.
+# Já aconteceu de a chave secreta do Supabase ser publicada por engano aqui.
+case "$NEXT_PUBLIC_SUPABASE_ANON_KEY" in
+  sb_secret_*|service_role*)
+    fail "NEXT_PUBLIC_SUPABASE_ANON_KEY contém uma chave SECRETA.
+   Tudo com prefixo NEXT_PUBLIC_ é servido ao navegador de todo visitante.
+   Use a chave anon/publishable aqui e a secreta em SUPABASE_SERVICE_ROLE_KEY."
+    ;;
+esac
+
+# A chave anon em formato JWT carrega \"role\":\"anon\" no payload. Se vier um JWT
+# com service_role, é a chave errada — mesmo problema, outro formato.
+case "$NEXT_PUBLIC_SUPABASE_ANON_KEY" in
+  eyJ*)
+    payload=$(echo "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | cut -d. -f2)
+    # base64url -> base64, com padding
+    decoded=$(echo "${payload}==" | tr '_-' '/+' | base64 -d 2>/dev/null || true)
+    case "$decoded" in
+      *service_role*)
+        fail "NEXT_PUBLIC_SUPABASE_ANON_KEY é um JWT com role service_role.
+   Use a chave anon."
+        ;;
+    esac
+    ;;
+esac
+
+# --- Opcionais: podem ficar vazias -------------------------------------
+# Stripe e reCAPTCHA são desligados graciosamente quando não configurados.
 
 echo "🔧 Injetando variáveis de ambiente no bundle..."
 
