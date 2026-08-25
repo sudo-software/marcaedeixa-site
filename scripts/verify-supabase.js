@@ -63,6 +63,18 @@ function checkEnv() {
 }
 
 function checkKeyShape(label, key, expectedRole, projectRef) {
+  // Chave copiada de saída que mascara segredos vem com bullets (U+2022) no
+  // lugar do valor. O app sobe, mas todo fetch quebra com
+  // "String contains non ISO-8859-1 code point".
+  const naoAscii = [...key].filter(c => c.charCodeAt(0) > 127)
+  if (naoAscii.length) {
+    const cps = [...new Set(naoAscii.map(c => 'U+' + c.charCodeAt(0).toString(16).toUpperCase()))]
+    console.log(`${NO} ${label}: contém ${naoAscii.length} caractere(s) não-ASCII (${cps.join(', ')})`)
+    console.log('    A chave foi copiada de uma saída que mascara segredos.')
+    console.log('    Copie direto do painel, pelo botão de copiar.\n')
+    return false
+  }
+
   if (key.startsWith('sb_publishable_') || key.startsWith('sb_secret_')) {
     console.log(`${NO} ${label}: formato novo (${key.slice(0, 16)}...)`)
     console.log('    Este projeto precisa das chaves em formato JWT (eyJhbGci...).')
