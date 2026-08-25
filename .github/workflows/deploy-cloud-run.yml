@@ -37,9 +37,24 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
+      # As variáveis NEXT_PUBLIC_* precisam entrar no BUILD, não só em runtime.
+      #
+      # O Next.js nomeia os chunks por hash do conteúdo. Sem os build args, o
+      # build gera sempre os mesmos placeholders, logo sempre os mesmos nomes de
+      # arquivo — e como eles são servidos com `immutable, max-age=31536000`, o
+      # CDN continua entregando a versão antiga por um ano, mesmo após o
+      # entrypoint reescrever o conteúdo no container.
+      #
+      # Passando os valores aqui, cada mudança altera o hash, os nomes mudam e o
+      # cache invalida sozinho. O sed do entrypoint vira rede de segurança.
       - name: Build image
         run: |
           docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --build-arg NEXT_PUBLIC_APP_URL="${{ secrets.NEXT_PUBLIC_APP_URL }}" \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" \
+            --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${{ secrets.NEXT_PUBLIC_RECAPTCHA_SITE_KEY }}" \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
             -t ${{ env.IMAGE }}:latest \
             .
