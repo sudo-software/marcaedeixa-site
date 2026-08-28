@@ -25,7 +25,7 @@ export default function Home() {
   const { user } = useAuth()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [heroVideoUrl, setHeroVideoUrl] = useState<string | null>(null)
+  const [demoVideoUrl, setDemoVideoUrl] = useState<string | null>(null)
 
   // Redireciona usuário logado pro dashboard
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function Home() {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         const embedUrl = extractYouTubeEmbedUrl(data?.content?.demo_video_url)
-        if (embedUrl) setHeroVideoUrl(embedUrl)
+        if (embedUrl) setDemoVideoUrl(embedUrl)
       })
       .catch(() => {})
   }, [])
@@ -244,7 +244,7 @@ export default function Home() {
                   variant="ghost"
                   size="lg"
                   className="text-lg px-8 py-6 rounded-full font-medium text-gray-600 hover:text-black hover:bg-gray-100"
-                  onClick={() => scrollToSection('sobre')}
+                  onClick={() => scrollToSection(demoVideoUrl ? 'demo' : 'sobre')}
                 >
                   <Play className="mr-2 w-5 h-5" />
                   Ver Demo
@@ -270,17 +270,6 @@ export default function Home() {
 
             {/* Visual Element */}
             <div className="relative hidden lg:block">
-              {heroVideoUrl ? (
-                <div className="rounded-3xl overflow-hidden shadow-2xl aspect-video">
-                  <iframe
-                    src={heroVideoUrl}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Demo do Marca e Deixa"
-                  />
-                </div>
-              ) : (
                 <div className="relative">
                   {/* Main Card */}
                   <div className="bg-black rounded-3xl shadow-2xl overflow-hidden">
@@ -328,7 +317,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              )}
             </div>
           </div>
         </div>
@@ -340,6 +328,31 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Demo Video Section — posição definida pela cliente: logo abaixo do hero */}
+      {demoVideoUrl && (
+        <section id="demo" className="py-24 bg-white scroll-mt-20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <p className="text-sm font-semibold tracking-widest text-gray-400 uppercase mb-4">
+                Veja funcionando
+              </p>
+              <h2 className="text-4xl sm:text-5xl font-bold text-black tracking-tight">
+                Como funciona na prática
+              </h2>
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-2xl aspect-video bg-black">
+              <iframe
+                src={demoVideoUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Demonstração do Marca e Deixa"
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* About Section */}
       <section id="sobre" className="py-32 bg-black text-white">
