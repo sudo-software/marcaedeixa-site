@@ -559,16 +559,39 @@ export default function Home() {
             <div>
               <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4">Contato</h4>
               <ul className="space-y-3 text-gray-400">
-                <li>contato@marcaedeixa.com</li>
-                <li>Suporte técnico</li>
-                <li>Documentação</li>
+                <li>
+                  <a
+                    href="mailto:marcaedeixa@gmail.com"
+                    className="hover:text-white transition-colors"
+                  >
+                    marcaedeixa@gmail.com
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:marcaedeixa@gmail.com?subject=Suporte%20t%C3%A9cnico"
+                    className="hover:text-white transition-colors"
+                  >
+                    Suporte técnico
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://marcaedeixa.github.io/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors"
+                  >
+                    Documentação
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              &copy; 2024 Marca e Deixa. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} Marca e Deixa. Todos os direitos reservados.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <a href="/termos-de-uso" className="text-gray-500 hover:text-white text-sm transition-colors">Termos de Uso</a>
